@@ -1,0 +1,64 @@
+-- Query 1
+SELECT 
+	s.customer_id,
+    SUM(m.price) AS amt_spent 
+FROM dannys_diner.sales s
+	INNER JOIN dannys_diner.menu m
+    ON s.product_id=m.product_id
+GROUP BY s.customer_id;
+
+-- Query 2:
+SELECT
+	customer_id,
+	COUNT(DISTINCT(order_date)) as days_visited
+FROM dannys_diner.sales
+GROUP BY customer_id;
+
+-- Query 3:
+WITH rank_prod AS
+(
+  SELECT
+      s.customer_id,
+      m.product_name,
+      RANK() OVER(PARTITION BY s.customer_id
+                ORDER BY s.order_date)
+  FROM dannys_diner.sales s
+      INNER JOIN dannys_diner.menu m
+          ON s.product_id = m.product_id
+)
+SELECT 
+	DISTINCT customer_id,product_name
+FROM rank_prod
+WHERE rank=1;
+
+-- Query 4
+SELECT 
+	m.product_name,
+    COUNT(s.product_id) as purchased_quan
+FROM dannys_diner.sales s
+	INNER JOIN dannys_diner.menu m
+		ON s.product_id = m.product_id
+GROUP BY m.product_name
+limit 1;
+
+-- Query 5:
+WITH rank_count AS
+(
+  SELECT
+      s.customer_id,
+      m.product_name,
+      COUNT(m.product_name) as count_prod,
+      RANK() OVER(PARTITION BY s.customer_id
+                  ORDER BY COUNT(m.product_name) DESC)
+  FROM dannys_diner.sales s
+      INNER JOIN dannys_diner.menu m
+          ON s.product_id = m.product_id
+  GROUP BY 
+      s.customer_id,
+      m.product_name
+)
+SELECT 
+	customer_id,
+    product_name
+FROM rank_count
+WHERE rank=1;
